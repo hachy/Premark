@@ -1,0 +1,23 @@
+{
+  "name": "premark",
+  "version": "0.0.1",
+  "description": "",
+  "main": "src/main.js",
+  "scripts": {
+    "package": "electron-packager . Premark --arch=x64 --out=packages/v0.0.1 --platform=darwin --version=0.32.1 --icon=premark.incs --ignore={packages, node_modules}/* --overwrite",
+    "start": "electron .",
+    "zip-darwin": "cd packages/v0.0.1 && zip -r Premark-darwin-x64.zip Premark-darwin-x64",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "hachy",
+  "license": "MIT",
+  "dependencies": {
+    "github-markdown-css": "^2.0.10",
+    "highlight.js": "^8.8.0",
+    "marked": "^0.3.5"
+  },
+  "devDependencies": {
+    "electron-packager": "^5.1.0",
+    "electron-prebuilt": "^0.32.1"
+  }
+}
