@@ -9,23 +9,39 @@ var ipc = require('ipc');
 require('crash-reporter').start();
 
 var mainWindow = null;
-var appName = require('app').getName();
+var appName = app.getName();
 
 app.on('window-all-closed', function() {
   app.quit();
+});
+
+ipc.on('err', function(event, arg) {
+  var readme = path.resolve(__dirname, '..', 'README.md');
+  mainWindow.setTitle(appName);
+  mainWindow.webContents.send('read-md', readme);
 });
 
 app.on('ready', function() {
   Menu.setApplicationMenu(menu);
   mainWindow = new BrowserWindow({ width: 800, height: 600 });
   mainWindow.loadUrl('file://' + __dirname + '/index.html');
+
+  if (process.argv.length >= 2) {
+    var filepath = process.argv[process.argv.length - 1];
+    mainWindow.webContents.on('did-finish-load', function() {
+      setWinTitle(filepath);
+      mainWindow.webContents.send('open-md', filepath);
+    });
+  } else if (process.argv.length <= 1) {
+    var readme = path.resolve(__dirname, '..', 'README.md');
+    mainWindow.webContents.on('did-finish-load', function() {
+      mainWindow.webContents.send('read-md', readme);
+    });
+  }
+
   mainWindow.on('closed', function() {
     mainWindow = null;
   });
-});
-
-ipc.on('md-title', function(event, arg) {
-  setWinTitle(arg);
 });
 
 function setWinTitle(fn) {
