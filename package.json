@@ -2,9 +2,9 @@
   "name": "premark",
   "version": "0.0.1",
   "description": "",
-  "main": "src/main.js",
+  "main": "dist/main.js",
   "scripts": {
-    "package": "electron-packager . Premark --arch=x64 --out=packages/v0.0.1 --platform=darwin --version=0.32.1 --icon=premark.incs --ignore={packages, node_modules}/* --overwrite",
+    "package": "electron-packager . Premark --arch=x64 --out=packages/v0.0.1 --platform=darwin --version=0.32.1 --icon=premark.incs --ignore={packages, node_modules, src}/* --overwrite",
     "start": "electron .",
     "zip-darwin": "cd packages/v0.0.1 && zip -r Premark-darwin-x64.zip Premark-darwin-x64",
     "test": "echo \"Error: no test specified\" && exit 1"
