@@ -44,6 +44,11 @@ app.on('ready', function() {
   });
 });
 
+app.on('open-file', function(event, filepath) {
+  event.preventDefault();
+  mainWindow.webContents.send('open-md', filepath);
+});
+
 function setWinTitle(fn) {
   var title = path.basename(fn);
   mainWindow.setTitle(title + ' - ' + appName);
