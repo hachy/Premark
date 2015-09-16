@@ -1,7 +1,7 @@
+import { resolve, basename } from 'path'
 import app from 'app'
 import BrowserWindow from 'browser-window'
 import Menu from 'menu'
-import path from 'path'
 import ipc from 'ipc'
 import dialog from 'dialog'
 import reporter from 'crash-reporter'
@@ -16,7 +16,7 @@ app.on('window-all-closed', () => {
 })
 
 ipc.on('err', (event, arg) => {
-  const readme = path.resolve(__dirname, '..', 'README.md')
+  const readme = resolve(__dirname, '..', 'README.md')
   mainWindow.setTitle(appName)
   mainWindow.webContents.send('read-md', readme)
 })
@@ -33,7 +33,7 @@ app.on('ready', () => {
       mainWindow.webContents.send('open-md', filepath)
     })
   } else if (process.argv.length <= 1) {
-    const readme = path.resolve(__dirname, '..', 'README.md')
+    const readme = resolve(__dirname, '..', 'README.md')
     mainWindow.webContents.on('did-finish-load', () => {
       mainWindow.webContents.send('read-md', readme)
     })
@@ -50,7 +50,7 @@ app.on('open-file', (event, filepath) => {
 })
 
 function setWinTitle(fn) {
-  const title = path.basename(fn)
+  const title = basename(fn)
   mainWindow.setTitle(`${title} - ${appName}`)
 }
 

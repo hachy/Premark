@@ -1,6 +1,6 @@
+import { readFile, watchFile }from 'fs'
+import { stderr } from 'process'
 import ipc from 'ipc'
-import process from 'process'
-import fs from 'fs'
 import marked from 'marked'
 
 ipc.on('read-md', (filepath) => {
@@ -19,9 +19,9 @@ marked.setOptions({
 })
 
 function read(filepath) {
-  fs.readFile(filepath, 'utf-8', (err, data) => {
+  readFile(filepath, 'utf-8', (err, data) => {
     if (err) {
-      process.stderr.write(`No such file or directory:  ${filepath}`)
+      stderr.write(`No such file or directory:  ${filepath}`)
       ipc.send('err', 'error')
       return
     }
@@ -30,7 +30,7 @@ function read(filepath) {
 }
 
 function watch(filepath) {
-  fs.watchFile(filepath, { interval: 10 }, () => {
+  watchFile(filepath, { interval: 10 }, () => {
     read(filepath)
   })
 }
