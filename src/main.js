@@ -1,118 +1,77 @@
 import { resolve, basename } from 'path'
 import app from 'app'
 import BrowserWindow from 'browser-window'
-import Menu from 'menu'
 import ipc from 'ipc'
-import dialog from 'dialog'
 import reporter from 'crash-reporter'
-reporter.start()
+import emitter from './eventemitter'
+import MyMenu from './menu'
 
-let mainWindow = null
+reporter.start()
 
 const appName = app.getName()
 
-app.on('window-all-closed', () => {
-  app.quit()
-})
+class Main {
+  constructor() {
+    this.mainWindow = null
 
-ipc.on('err', (event, arg) => {
-  const readme = resolve(__dirname, '..', 'README.md')
-  mainWindow.setTitle(appName)
-  mainWindow.webContents.send('read-md', readme)
-})
+    this.ipcErr = this.ipcErr.bind(this)
+    this.openWhenExisting = this.openWhenExisting.bind(this)
+    this.openFromMenu = this.openFromMenu.bind(this)
 
-app.on('ready', () => {
-  Menu.setApplicationMenu(menu)
-  mainWindow = new BrowserWindow({ width: 800, height: 600 })
-  mainWindow.loadUrl(`file://${__dirname}/index.html`)
+    app.on('ready', this.onReady.bind(this))
+    ipc.on('err', this.ipcErr)
+    app.on('open-file', this.openWhenExisting)
+    app.on('window-all-closed', this.quit)
+    emitter.on('openFromMenu', this.openFromMenu)
+  }
 
-  if (process.argv.length >= 2) {
-    const filepath = process.argv[process.argv.length - 1]
-    mainWindow.webContents.on('did-finish-load', () => {
-      setWinTitle(filepath)
-      mainWindow.webContents.send('open-md', filepath)
+  onReady() {
+    this.menu = new MyMenu()
+    this.mainWindow = new BrowserWindow({ width: 800, height: 600 })
+    this.mainWindow.loadUrl(`file://${__dirname}/index.html`)
+
+    if (process.argv.length >= 2) {
+      const filepath = process.argv[process.argv.length - 1]
+      this.mainWindow.webContents.on('did-finish-load', () => {
+        this.setWinTitle(filepath)
+        this.mainWindow.webContents.send('open-md', filepath)
+      })
+    } else if (process.argv.length <= 1) {
+      const readme = resolve(__dirname, '..', 'README.md')
+      this.mainWindow.webContents.on('did-finish-load', () => {
+        this.mainWindow.webContents.send('read-md', readme)
+      })
+    }
+
+    this.mainWindow.on('closed', () => {
+      this.mainWindow = null
     })
-  } else if (process.argv.length <= 1) {
+  }
+
+  ipcErr(event, arg) {
     const readme = resolve(__dirname, '..', 'README.md')
-    mainWindow.webContents.on('did-finish-load', () => {
-      mainWindow.webContents.send('read-md', readme)
-    })
+    this.mainWindow.setTitle(appName)
+    this.mainWindow.webContents.send('read-md', readme)
   }
 
-  mainWindow.on('closed', () => {
-    mainWindow = null
-  })
-})
-
-app.on('open-file', (event, filepath) => {
-  event.preventDefault()
-  mainWindow.webContents.send('open-md', filepath)
-})
-
-function setWinTitle(fn) {
-  const title = basename(fn)
-  mainWindow.setTitle(`${title} - ${appName}`)
-}
-
-const template = [
-  {
-    label: 'File',
-    submenu: [
-      {
-        label: 'Open',
-        accelerator: 'Command+O',
-        click: () => {
-          dialog.showOpenDialog({
-            properties: ['openFile'],
-            filters: [{ name: 'All Files', extensions: ['markdown', 'md']}]
-          }, (filenames) => {
-            if (!filenames || !filenames[0]) {
-              return
-            }
-            const filepath = filenames[0]
-            setWinTitle(filepath)
-            mainWindow.webContents.send('open-md', filepath)
-          })
-        }
-      }
-    ]
-  },
-  {
-    label: 'Window',
-    role: 'window',
-    submenu: [
-      {
-        label: 'Minimize',
-        accelerator: 'CmdOrCtrl+M',
-        role: 'minimize'
-      },
-      {
-        label: 'Close',
-        accelerator: 'CmdOrCtrl+W',
-        role: 'close'
-      }
-    ]
+  openWhenExisting(event, filepath) {
+    event.preventDefault()
+    this.mainWindow.webContents.send('open-md', filepath)
   }
-]
 
-if (process.platform === 'darwin') {
-  template.unshift({
-    label: appName,
-    submenu: [
-      {
-        label: `About ${appName}`,
-        role: 'about'
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: 'Quit',
-        accelerator: 'Command+Q',
-        click: () => { app.quit() }
-      }
-    ]
-  })
+  quit() {
+    app.quit()
+  }
+
+  openFromMenu(filepath) {
+    this.setWinTitle(filepath)
+    this.mainWindow.webContents.send('open-md', filepath)
+  }
+
+  setWinTitle(fn) {
+    const title = basename(fn)
+    this.mainWindow.setTitle(`${title} - ${appName}`)
+  }
 }
 
-const menu = Menu.buildFromTemplate(template)
+global.main = new Main()
